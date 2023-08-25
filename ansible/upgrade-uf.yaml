@@ -1,0 +1,42 @@
+---
+  - hosts: linuxserver_linux
+    user: ec2-user
+    gather_facts: True
+    become: yes
+    become_method: sudo
+    vars:
+      ansible_ssh_private_key_file: #pem_file
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    tasks:
+      - name: Download Splunk Universal Forwarder
+        ansible.builtin.shell: >
+          wget -O /tmp/splunkforwarder-9.1.0-1c86ca0bacc3-Linux-x86_64.tgz "https://download.splunk.com/products/universalforwarder/releases/9.1.0/linux/splunkforwarder-9.1.0-1c86ca0bacc3-Linux-x86_64.tgz"
+        register: wget_result
+
+      - name: Stop Splunk Universal Forwarder
+        ansible.builtin.command: >
+          /opt/splunkforwarder/bin/splunk stop
+        become_user: splunkuf
+
+      - name: Upgrade Splunk Universal Forwarder
+        ansible.builtin.unarchive:
+          src: /tmp/splunkforwarder-9.1.0-1c86ca0bacc3-Linux-x86_64.tgz
+          dest: /opt
+          remote_src: yes
+        become_user: root
+
+      - name: Set ownership of Splunk directory
+        ansible.builtin.file:
+          path: /opt/splunkforwarder
+          owner: splunkuf
+          group: splunkuf
+          recurse: yes
+        become_user: root
+
+      - name: Start Splunk Universal Forwarder
+        ansible.builtin.command: >
+          /opt/splunkforwarder/bin/splunk start --accept-license --answer-yes --no-prompt
+        become_user: splunkuf
+
+
+    

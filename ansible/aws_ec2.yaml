@@ -1,0 +1,13 @@
+plugin: aws_ec2
+regions:
+  - "us-west-1"
+
+keyed_groups:
+  - key: tags.Role
+    prefix: linuxserver
+filters:
+  instance-state-name : running
+compose:
+  ansible_host: public_ip_address
+  instance_id: id
+  ansible_private_ip: private_ip_address
